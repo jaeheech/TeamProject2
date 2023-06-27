@@ -32,10 +32,11 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const disconnectedUser = users.find((user) => user.socketId === socket.id);
     if (disconnectedUser) {
-      users = users.filter((user) => user.socketId !== socket.id);
       const nickname = disconnectedUser.nickname;
       const displayName = disconnectedUser.displayName;
-      socket.broadcast.emit("update", {
+      users = users.filter((user) => user.socketId !== socket.id);
+
+      io.emit("update", {
         type: "disconnect",
         nickname,
         displayName,
