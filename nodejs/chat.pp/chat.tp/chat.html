@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>채팅</title>
+    <link rel="stylesheet" href="/css/index.css" />
+    <style>  
+    </style>
+  </head>
+  <body>
+    <div id="header">
+        <h2 id="main title">★민지의 채팅방★</h2>
+    </div>
+    <div id="main">
+      <div id="loginModal" class="modal">
+        <div class="modal-content">
+          <input
+            type="text"
+            id="nicknameInput"
+            placeholder="닉네임을 입력해주세요"
+            onkeydown="handleNicknameKeyDown(event)"
+          />
+          <br />
+          <input
+            type="text"
+            id="displayNameInput"
+            placeholder="대화명을 입력해주세요"
+            onkeydown="handleDisplayNameKeyDown(event)"
+          />
+          <br />
+          <input type="checkbox" id="anonymousCheckbox" />
+          <label for="anonymousCheckbox">익명</label>
+          <br />
+          <button onclick="login()">로그인</button>
+        </div>
+      </div>
+      <div id="chat" style="display: none">
+        <!-- 채팅 메시지 영역 -->
+      </div>
+      <div id="messageInputArea">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="메시지를 입력해주세요.."
+          onkeydown="handleKeyDown(event)"
+        />
+        <br />
+        <button onclick="sendMessage()">전송</button>
+        <button onclick="leaveRoom()">나가기</button>
+      </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      let user = { nickname: "", displayName: "" };
+
+      const socket = io();
+
+      // 모달 창 표시
+      window.onload = function () {
+        const loginModal = document.getElementById("loginModal");
+        loginModal.style.display = "block";
+      };
+
+      function login() {
+        const displayNameInput = document.getElementById("displayNameInput");
+        const isAnonymous =
+          document.getElementById("anonymousCheckbox").checked;
+
+        if (isAnonymous || displayNameInput.value.trim() !== "") {
+          const nickname = isAnonymous
+            ? "익명"
+            : document.getElementById("nicknameInput").value.trim();
+          const displayName = displayNameInput.value.trim();
+
+          user.nickname = nickname;
+          user.displayName = displayName;
+
+          socket.emit("login", { nickname, displayName }); // 수정: nickname과 displayName 전송
+
+          // 로그인 성공 시 UI 변경
+          document.getElementById("loginModal").style.display = "none";
+          document.getElementById("chat").style.display = "block";
+          document.getElementById("messageInputArea").style.display = "block";
+        }
+      }
+
+      function handleNicknameKeyDown(event) {
+        if (event.key === "Enter") {
+          const displayNameInput = document.getElementById("displayNameInput");
+          displayNameInput.focus();
+        }
+      }
+
+      function handleDisplayNameKeyDown(event) {
+        if (event.key === "Enter") {
+          login();
+        }
+      }
+      socket.on("update", function (data) {
+        if (data.type === "connect" || data.type === "disconnect") {
+          const displayName = data.displayName ? `(${data.displayName})` : "";
+          const message = `${data.nickname}${displayName} 님이 접속하셨습니다.`;
+          appendMessage(message);
+        } else if (data.type === "message") {
+          const displayName = data.displayName ? `(${data.displayName})` : "";
+          const nickname = data.nickname !== user.nickname ? data.nickname : "";
+          const message = `${nickname}${displayName}: ${data.message}`;
+          appendMessage(message);
+        }
+      });
+
+      function sendMessage() {
+        const messageInput = document.getElementById("messageInput");
+        const message = messageInput.value.trim();
+        if (message !== "") {
+          const nickname = user.nickname || "익명";
+          const displayName = user.displayName ? `(${user.displayName})` : "";
+          const formattedMessage = `${message}`;
+
+          socket.emit("sendMessage", formattedMessage);
+          appendMessage(`${nickname}${displayName}: ${formattedMessage}`);
+
+          messageInput.value = "";
+        }
+      }
+
+      function appendMessage(message) {
+        const chatDiv = document.getElementById("chat");
+        const messageDiv = document.createElement("div");
+
+        // 정규식을 사용하여 닉네임, 대화명, 메시지를 분리
+        const regex = /^([^:]+)\(([^)]+)\): (.*)$/;
+        const match = message.match(regex);
+
+        if (match) {
+          const nickname = match[1];
+          const displayName = match[2];
+          const content = match[3];
+
+          // 대화명이 있는 경우 닉네임(대화명) 형식으로 메시지 구성
+          const formattedMessage = displayName
+            ? `${nickname}(${displayName}): ${content}`
+            : `${nickname}: ${content}`;
+
+          messageDiv.textContent = formattedMessage;
+        } else {
+          // 형식에 맞지 않는 메시지는 그대로 출력
+          messageDiv.textContent = message;
+        }
+
+        chatDiv.appendChild(messageDiv);
+
+        // 스크롤을 아래로 자동으로 이동
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      }
+
+      function handleKeyDown(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      function leaveRoom() {
+  const nickname = user.nickname || "익명";
+  const displayName = user.displayName ? `(${user.displayName})` : "";
+  const message = `${nickname}${displayName} 님이 나가셨습니다.`;
+
+  appendMessage(message);
+  socket.emit("disconnectUser"); // 서버로 disconnectUser 이벤트 전송
+
+  // UI 초기화
+  document.getElementById("chat").innerHTML = "";
+  document.getElementById("chat").style.display = "none";
+  document.getElementById("messageInputArea").style.display = "none";
+  document.getElementById("loginModal").style.display = "block";
+}
+    </script>
+  </body>
+</html>

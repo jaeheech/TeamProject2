@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="chat.css" />
+  </head>
+  <body>
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>로그인</h2>
+        <input type="text" id="username" placeholder="사용자 이름" />
+        <button id="loginSubmit">로그인</button>
+      </div>
+    </div>
+
+    <div id="chatContainer" class="hidden">
+      <div id="chatOutput"></div>
+      <div id="chatControls">
+        <input
+          type="text"
+          id="messageInput"
+          placeholder="메시지를 입력하세요"
+        />
+        <button id="sendMessage">전송</button>
+        <button id="exitBtn">나가기</button>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.1/socket.io.js"></script>
+    <script>
+      window.addEventListener("DOMContentLoaded", (event) => {
+        const loginModal = document.getElementById("loginModal");
+        const closeBtn = document.getElementsByClassName("close")[0];
+        const loginSubmit = document.getElementById("loginSubmit");
+        const chatContainer = document.getElementById("chatContainer");
+        const messageInput = document.getElementById("messageInput");
+        const sendMessageBtn = document.getElementById("sendMessage");
+        const exitBtn = document.getElementById("exitBtn");
+        const chatOutput = document.getElementById("chatOutput");
+        const usernameInput = document.getElementById("username");
+        let username = "";
+        let isChatting = false;
+  
+        showLoginModal();
+  
+        function showLoginModal() {
+          chatContainer.classList.add("hidden");
+          loginModal.style.display = "block";
+          usernameInput.value = "";
+        }
+  
+        function showChatContainer() {
+          loginModal.style.display = "none";
+          chatContainer.classList.remove("hidden");
+          isChatting = true;
+  
+          const entryMessage = document.createElement("div");
+          entryMessage.textContent = `${username}님이 입장하셨습니다.`;
+          entryMessage.classList.add("entry-message");
+          chatOutput.insertBefore(entryMessage, chatOutput.firstChild);
+          chatOutput.scrollTop = 0;
+        }
+  
+        function clearChatOutput() {
+          while (chatOutput.firstChild) {
+            chatOutput.removeChild(chatOutput.firstChild);
+          }
+        }
+  
+        closeBtn.addEventListener("click", function () {
+          showLoginModal();
+        });
+  
+        loginSubmit.addEventListener("click", function () {
+          username = usernameInput.value;
+          if (username) {
+            showChatContainer();
+          }
+        });
+  
+        messageInput.addEventListener("keyup", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            sendMessageBtn.click();
+          }
+        });
+  
+        sendMessageBtn.addEventListener("click", function () {
+          const message = messageInput.value;
+          if (message) {
+            if (message.startsWith("/ㅈ ")) {
+              const parts = message.split(" ");
+              const recipient = parts[1];
+              const content = parts.slice(2).join(" ");
+  
+              if (recipient && content) {
+                if (recipient === username) {
+                  const errorMessage = document.createElement("div");
+                  errorMessage.textContent = `자기 자신에게는 귓속말을 할 수 없습니다.`;
+                  errorMessage.classList.add("message", "other");
+                  chatOutput.appendChild(errorMessage);
+                } else {
+                  const whisperMessage = document.createElement("div");
+                  whisperMessage.textContent = `(귓속말) ${username}님이 ${recipient}에게: ${content}`;
+                  whisperMessage.classList.add("message", "other");
+                  chatOutput.appendChild(whisperMessage);
+                }
+              }
+            } else {
+              const newMessage = document.createElement("div");
+              newMessage.textContent = `${username}: ${message}`;
+              newMessage.classList.add("message", "own"); // 오른쪽에 위치하도록 "own" 클래스 추가
+              chatOutput.appendChild(newMessage);
+            }
+  
+            messageInput.value = "";
+          }
+        });
+  
+        exitBtn.addEventListener("click", function () {
+          if (isChatting) {
+            const exitMessage = document.createElement("div");
+            exitMessage.textContent = `${username}님이 나갔습니다.`;
+            chatOutput.appendChild(exitMessage);
+            isChatting = false;
+            showLoginModal();
+            clearChatOutput();
+          }
+        });
+      });
+    </script>
+    <script src="chat.js"></script>
+  </body>
+</html>
