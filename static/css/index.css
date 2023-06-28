@@ -75,10 +75,3 @@ body {
     color: gold;
     transform: rotate(360deg);
   }
-  #message > li {
-    padding: 5px 10px;
-  }
-  #message > li:nth-child(odd) {
-    background-color: #efefef;
-  }
-  
