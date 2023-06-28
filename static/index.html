@@ -117,6 +117,12 @@
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const message = `${data.nickname}${displayName} 님이 접속하셨습니다.`;
           appendMessage(message);
+
+          // 입장 메시지를 모달에 표시
+          document.getElementById("loginModal").style.display = "none";
+          document.getElementById("chat").style.display = "block";
+          document.getElementById("messageInputArea").style.display = "block";
+          document.getElementById("joinMessage").textContent = message;
         } else if (data.type === "disconnect") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const message = `${data.nickname}${displayName} 님이 나가셨습니다.`;
@@ -124,8 +130,10 @@
         } else if (data.type === "message") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const nickname = data.nickname !== user.nickname ? data.nickname : "";
-          const message = `${nickname}${displayName}: ${data.message}`;
-          appendMessage(message);
+          if (nickname !== "") {
+            const message = `${nickname}${displayName}: ${data.message}`;
+            appendMessage(message);
+          }
         }
       });
 

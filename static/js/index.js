@@ -16,12 +16,12 @@ io.on("connection", (socket) => {
   socket.on("login", (data) => {
     const user = { socketId: socket.id, ...data };
     users.push(user);
-    socket.broadcast.emit("update", { type: "connect", ...user });
+    io.emit("update", { type: "connect", ...user });
   });
 
   socket.on("sendMessage", (message) => {
     const sender = users.find((user) => user.socketId === socket.id);
-    socket.broadcast.emit("update", {
+    io.emit("update", {
       type: "message",
       nickname: sender.nickname,
       displayName: sender.displayName,
