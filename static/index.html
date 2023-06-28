@@ -34,7 +34,8 @@
           <button onclick="login()">로그인</button>
         </div>
       </div>
-      <div id="chat" style="display: none">
+      <div id="chat" style="display: none; background-color: yellow;
+      border-radius: 15px; margin: 5px;">
         <!-- 채팅 메시지 영역 -->
       </div>
       <div id="messageInputArea">
@@ -43,10 +44,8 @@
           id="messageInput"
           placeholder="메시지를 입력해주세요.."
           onkeydown="handleKeyDown(event)"
-        />
-        <br />
-        <button onclick="sendMessage()">전송</button>
-        <button onclick="leaveRoom()">나가기</button>
+          />
+          <button onclick="sendMessage()">전송</button>
       </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
