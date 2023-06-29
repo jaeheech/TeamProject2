@@ -4,12 +4,10 @@
     <meta charset="utf-8" />
     <title>채팅</title>
     <link rel="stylesheet" href="/css/index.css" />
-    <style>  
-    </style>
   </head>
   <body>
     <div id="header">
-        <h2 id="main title">★민지의 채팅방★</h2>
+      <h2>★민지의 채팅방★</h2>
     </div>
     <div id="main">
       <div id="loginModal" class="modal">
@@ -34,18 +32,17 @@
           <button onclick="login()">로그인</button>
         </div>
       </div>
-      <div id="chat" style="display: none; background-color: yellow;
-      border-radius: 15px; margin: 5px;">
+      <div id="chat">
         <!-- 채팅 메시지 영역 -->
       </div>
-      <div id="messageInputArea">
+      <div id="messageInputArea" style="display: none">
         <input
           type="text"
           id="messageInput"
           placeholder="메시지를 입력해주세요.."
           onkeydown="handleKeyDown(event)"
-          />
-          <button onclick="sendMessage()">전송</button>
+        />
+        <button onclick="sendMessage()">전송</button>
       </div>
     </div>
     <script src="/socket.io/socket.io.js"></script>
@@ -96,15 +93,27 @@
         }
       }
       socket.on("update", function (data) {
-        if (data.type === "connect" || data.type === "disconnect") {
+        if (data.type === "connect") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const message = `${data.nickname}${displayName} 님이 접속하셨습니다.`;
+          appendMessage(message);
+
+          // 입장 메시지를 모달에 표시
+          document.getElementById("loginModal").style.display = "none";
+          document.getElementById("chat").style.display = "block";
+          document.getElementById("messageInputArea").style.display = "block";
+          document.getElementById("joinMessage").textContent = message;
+        } else if (data.type === "disconnect") {
+          const displayName = data.displayName ? `(${data.displayName})` : "";
+          const message = `${data.nickname}${displayName} 님이 나가셨습니다.`;
           appendMessage(message);
         } else if (data.type === "message") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const nickname = data.nickname !== user.nickname ? data.nickname : "";
-          const message = `${nickname}${displayName}: ${data.message}`;
-          appendMessage(message);
+          if (nickname !== "") {
+            const message = `${nickname}${displayName}: ${data.message}`;
+            appendMessage(message);
+          }
         }
       });
 
@@ -160,19 +169,19 @@
       }
 
       function leaveRoom() {
-  const nickname = user.nickname || "익명";
-  const displayName = user.displayName ? `(${user.displayName})` : "";
-  const message = `${nickname}${displayName} 님이 나가셨습니다.`;
+        const nickname = user.nickname || "익명";
+        const displayName = user.displayName ? `(${user.displayName})` : "";
+        const message = `${nickname}${displayName} 님이 나가셨습니다.`;
 
-  appendMessage(message);
-  socket.emit("disconnectUser"); // 서버로 disconnectUser 이벤트 전송
+        appendMessage(message);
+        socket.disconnect(); // 클라이언트 측에서 disconnect() 함수를 호출하여 연결 종료
 
-  // UI 초기화
-  document.getElementById("chat").innerHTML = "";
-  document.getElementById("chat").style.display = "none";
-  document.getElementById("messageInputArea").style.display = "none";
-  document.getElementById("loginModal").style.display = "block";
-}
+        // UI 초기화
+        document.getElementById("chat").innerHTML = "";
+        document.getElementById("chat").style.display = "none";
+        document.getElementById("messageInputArea").style.display = "none";
+        document.getElementById("loginModal").style.display = "block";
+      }
     </script>
   </body>
 </html>
