@@ -121,7 +121,7 @@
         </div>
       </div>
       <div id="chat" style="display: none">
-        <div id="joinMessage"></div>
+        <div id="joinMessage" class="join-message" style="display: none"></div>
         <!-- 채팅 메시지 영역 -->
       </div>
       <div id="messageInputArea" style="display: none">
@@ -182,10 +182,20 @@
           login();
         }
       }
+
       socket.on("update", function (data) {
         if (data.type === "connect") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const message = `${data.nickname}${displayName} 님이 접속하셨습니다.`;
+          if (!hasJoined) {
+            // 최초 입장 메시지를 표시할 때만 처리
+            hasJoined = false; // 입장 메시지를 표시한 상태로 변경
+            document.getElementById("joinMessage").style.display = "block"; // 입장 메시지를 보이도록 함
+            document.getElementById("joinMessage").textContent = message;
+          } else {
+            // 이미 입장 메시지를 표시한 경우는 무시
+            return;
+          }
 
           if (displayName !== "") {
             appendMessage(message);
@@ -195,6 +205,13 @@
           document.getElementById("loginModal").style.display = "none";
           document.getElementById("chat").style.display = "block";
           document.getElementById("messageInputArea").style.display = "block";
+          // 이전에 입장 메시지를 표시한 적이 없으면서 connect 이벤트인 경우에만 처리
+          if (data.type === "connect" && !hasJoined) {
+            hasJoined = true; // hasJoined 값을 true로 설정하여 다음에 중복 표시하지 않도록 함
+            document.getElementById("joinMessage").style.display = "block"; // 입장 메시지를 보이도록 함
+          } else {
+            return; // 이미 입장 메시지를 표시한 경우 또는 다른 이벤트인 경우는 처리하지 않음
+          }
           document.getElementById("joinMessage").textContent = message;
         } else if (data.type === "disconnect") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
