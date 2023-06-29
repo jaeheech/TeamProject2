@@ -1,30 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>채팅</title>
     <link rel="stylesheet" href="/css/index.css" />
     <style>
-      /* 모달 스타일 */
       .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
+        background-color: #f1f1f1;
+        margin: auto;
         padding: 20px;
-        border: 1px solid #888;
-        width: 400px;
-        height: 400px;
+        border: 1px solid #ccc;
+        width: 300px;
+        text-align: center;
+      }
+
+      input[type="text"],
+      button {
+        margin: 10px 0;
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      #messageInputArea {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 10px;
+        background-color: #f1f1f1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+        box-sizing: border-box;
+      }
+
+      #messageInput {
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 8px;
+        border: 1px solid #ccc;
+      }
+
+      #messageInputArea button {
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+        padding: 8px 16px;
+        border: none;
+        box-sizing: border-box;
+      }
+
+      @media screen and (max-width: 480px) {
+        .modal-content {
+          width: 90%;
+        }
+
+        #messageInputArea {
+          flex-direction: column;
+          padding: 10px;
+        }
+
+        #messageInput {
+          margin-right: 0;
+          margin-bottom: 10px;
+        }
+        #messageInputArea button {
+          width: 100%;
+        }
+      }
+      #joinMessage {
+        text-align: center;
+        color: #4caf50;
+        margin: 10px 0;
+        font-weight: bold;
       }
     </style>
   </head>
@@ -32,6 +99,7 @@
     <div id="main">
       <div id="loginModal" class="modal">
         <div class="modal-content">
+          <h2>2조 채팅방</h2>
           <input
             type="text"
             id="nicknameInput"
@@ -53,6 +121,7 @@
         </div>
       </div>
       <div id="chat" style="display: none">
+        <div id="joinMessage"></div>
         <!-- 채팅 메시지 영역 -->
       </div>
       <div id="messageInputArea" style="display: none">
@@ -68,6 +137,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       let user = { nickname: "", displayName: "" };
+      let hasJoined = false; // Add this line
 
       const socket = io();
 
@@ -116,7 +186,10 @@
         if (data.type === "connect") {
           const displayName = data.displayName ? `(${data.displayName})` : "";
           const message = `${data.nickname}${displayName} 님이 접속하셨습니다.`;
-          appendMessage(message);
+
+          if (displayName !== "") {
+            appendMessage(message);
+          }
 
           // 입장 메시지를 모달에 표시
           document.getElementById("loginModal").style.display = "none";
